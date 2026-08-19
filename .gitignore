@@ -1,0 +1,21 @@
+# ignore everything
+*
+
+# allow folders so git can traverse them
+!*/
+
+# allow python and notebooks globally
+!*.ipynb
+!*.py
+!*.yml
+
+# ignore everything in examples
+examples/**
+
+# # but allow the trial folder
+# !trial/input/*
+# !trial/catalog/*
+# !trial/*.ipynb
+
+# keep gitignore
+!.gitignore
