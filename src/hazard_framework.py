@@ -592,3 +592,611 @@ def calculate_burden(
     return burden_gdf
 
 
+def classify_extreme(
+    df,
+    flood_column="flood_mean",
+    erosion_column="sds:change_rate",
+    subsidence_column="subsidence",
+    quantile=0.9,
+):
+    """
+    Classify extreme flood, erosion, and subsidence values using
+    quantile-based thresholds.
+
+    Shoreline erosion is represented as the absolute value of negative
+    shoreline change rates, such that positive or stable shoreline
+    changes are assigned an erosion magnitude of zero. Extreme conditions
+    are defined independently for each hazard using the specified
+    quantile of the available values.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame or geopandas.GeoDataFrame
+        Input dataframe containing flood depth, shoreline change rate,
+        and land subsidence data.
+    flood_column : str, default "flood_mean"
+        Column containing flood values.
+    erosion_column : str, default "sds:change_rate"
+        Column containing shoreline change rates. Negative values are
+        interpreted as erosion.
+    subsidence_column : str, default "subsidence"
+        Column containing land subsidence values.
+    quantile : float, default 0.9
+        Quantile used to define extreme hazard conditions. For example,
+        0.9 defines values at or above the 90th percentile as extreme.
+
+    Returns
+    -------
+    pandas.DataFrame or geopandas.GeoDataFrame
+        Copy of the input dataframe with the following additional columns:
+
+        - ``erosion`` : absolute magnitude of negative shoreline change.
+        - ``flood`` : flood values copied from ``flood_column``.
+        - ``flood_extreme`` : boolean indicator of extreme flooding.
+        - ``erosion_extreme`` : boolean indicator of extreme erosion.
+        - ``subs_extreme`` : boolean indicator of extreme subsidence.
+
+    Notes
+    -----
+    Thresholds are calculated independently from the distribution of
+    each hazard variable in the supplied dataframe. Therefore, if the
+    dataframe contains only a regional subset, the resulting thresholds
+    represent regional rather than global extreme conditions.
+    """
+    df = df.copy()
+
+    # Convert negative shoreline change rates to positive erosion magnitude
+    df["erosion"] = df[erosion_column].clip(upper=0).abs()
+    df["flood"] = df[flood_column]
+    df["subsidence"] = df[subsidence_column]
+
+    # Calculate quantile thresholds
+    flood_threshold = df["flood"].quantile(quantile)
+    erosion_threshold = df["erosion"].quantile(quantile)
+    subsidence_threshold = df[subsidence_column].quantile(quantile)
+
+    # Classify extreme hazard conditions
+    df["flood_extreme"] = df["flood"] >= flood_threshold
+    df["erosion_extreme"] = df["erosion"] >= erosion_threshold
+    df["subs_extreme"] = df[subsidence_column] >= subsidence_threshold
+
+    print(
+        "Flood threshold:", flood_threshold,
+        "Erosion threshold:", erosion_threshold,
+        "Subsidence threshold:", subsidence_threshold,
+    )
+
+    return df
+
+def amp_stats(
+    df,
+    min_total=100,
+    min_overlap=10,
+):
+    """
+    Calculate flood amplification statistics for a single spatial group.
+
+    Amplification is defined as:
+
+        A_F|E  = P(F | E) / P(F)
+        A_F|S  = P(F | S) / P(F)
+        A_F|ES = P(F | E ∩ S) / P(F)
+
+    Parameters
+    ----------
+    df : pandas.DataFrame or geopandas.GeoDataFrame
+        Data for a single spatial aggregation unit. Missing-value
+        handling should be performed before calling this function.
+
+    min_total : int, default 100
+        Minimum number of observations required to calculate
+        amplification.
+
+    min_overlap : int, default 10
+        Minimum number of observations in the corresponding conditioning
+        population.
+
+    Returns
+    -------
+    pandas.Series
+        Observation counts, conditional probabilities, and amplification
+        factors for the spatial group.
+    """
+
+    # Extreme hazard indicators
+    F = df["flood_extreme"].fillna(False).astype(bool)
+    E = df["erosion_extreme"].fillna(False).astype(bool)
+    S = df["subs_extreme"].fillna(False).astype(bool)
+
+    # Hazard combinations
+    FE = F & E
+    FS = F & S
+    ES = E & S
+    FES = F & E & S
+
+    # Counts
+    n_total = len(df)
+
+    n_F = F.sum()
+    n_E = E.sum()
+    n_S = S.sum()
+
+    n_FE = FE.sum()
+    n_FS = FS.sum()
+    n_ES = ES.sum()
+    n_FES = FES.sum()
+
+    # Baseline flood probability
+    pF = F.mean() if n_total > 0 else np.nan
+
+    # Default values
+    pF_E = np.nan
+    pF_S = np.nan
+    pF_ES = np.nan
+
+    amp_FE = np.nan
+    amp_FS = np.nan
+    amp_FES = np.nan
+
+    # Calculate amplification only when sufficient data are available
+    if (
+        n_total >= min_total
+        and pd.notna(pF)
+        and pF > 0
+    ):
+
+        # Flood given erosion
+        if n_E >= min_overlap:
+            pF_E = F[E].mean()
+            amp_FE = pF_E / pF
+
+        # Flood given subsidence
+        if n_S >= min_overlap:
+            pF_S = F[S].mean()
+            amp_FS = pF_S / pF
+
+        # Flood given erosion and subsidence
+        if n_ES >= min_overlap:
+            pF_ES = F[ES].mean()
+            amp_FES = pF_ES / pF
+
+    return pd.Series({
+        "n_total": n_total,
+
+        "n_F": n_F,
+        "n_E": n_E,
+        "n_S": n_S,
+
+        "n_FE": n_FE,
+        "n_FS": n_FS,
+        "n_ES": n_ES,
+        "n_FES": n_FES,
+
+        "pF": pF,
+        "pF_E": pF_E,
+        "pF_S": pF_S,
+        "pF_ES": pF_ES,
+
+        "amp_FE": amp_FE,
+        "amp_FS": amp_FS,
+        "amp_FES": amp_FES,
+    })
+
+def calculate_amplification(
+    df,
+    framework="h3",
+    polygon_file=None,
+    group_column="Acronym",
+    min_total=100,
+    min_overlap=10,
+    complete_case=True,
+):
+    """
+    Calculate regional flood amplification using either H3 cells
+    or user-supplied polygon aggregation.
+
+    Parameters
+    ----------
+    df : geopandas.GeoDataFrame
+        Transect-level hazard dataset containing flood, erosion,
+        subsidence, extreme-hazard classifications, and geometry.
+
+    framework : {"h3", "polygon"}, default "h3"
+        Spatial aggregation framework.
+
+        - ``"h3"`` groups observations using the existing H3 identifier.
+        - ``"polygon"`` spatially joins observations to an external
+          polygon dataset and groups them using ``group_column``.
+
+    polygon_file : str or pathlib.Path, optional
+        Path to the polygon dataset. Required when
+        ``framework="polygon"``.
+
+    group_column : str, default "Acronym"
+        Polygon identifier used for grouping when
+        ``framework="polygon"``.
+
+    min_total : int, default 100
+        Minimum number of observations within each spatial unit
+        required to calculate amplification.
+
+    min_overlap : int, default 10
+        Minimum number of conditioning observations required to
+        calculate each amplification factor.
+
+    complete_case : bool, default True
+        If True, observations missing flood, erosion, or subsidence
+        values are removed before spatial aggregation and amplification
+        calculation.
+
+    Returns
+    -------
+    geopandas.GeoDataFrame
+        Spatially aggregated amplification statistics with geometry.
+    """
+
+    df = df.copy()
+
+    # --------------------------------------------------------------
+    # Handle missing observations
+    # --------------------------------------------------------------
+    if complete_case:
+        df = df.dropna(
+            subset=["flood", "erosion", "subsidence"]
+        ).copy()
+
+    # --------------------------------------------------------------
+    # H3 aggregation
+    # --------------------------------------------------------------
+    if framework == "h3":
+
+        if "h3" not in df.columns:
+            raise KeyError(
+                "'h3' column is required when framework='h3'."
+            )
+
+        # Calculate statistics
+        df_amp = (
+            df.groupby("h3")
+            .apply(
+                amp_stats,
+                min_total=min_total,
+                min_overlap=min_overlap,
+                include_groups=False,
+            )
+            .reset_index()
+        )
+
+        # H3 cell centre
+        df_amp["lat"] = df_amp["h3"].apply(
+            lambda x: h3.cell_to_latlng(x)[0]
+        )
+
+        df_amp["lon"] = df_amp["h3"].apply(
+            lambda x: h3.cell_to_latlng(x)[1]
+        )
+
+        # Create point geometry at H3 cell centre
+        df_amp = gpd.GeoDataFrame(
+            df_amp,
+            geometry=gpd.points_from_xy(
+                df_amp["lon"],
+                df_amp["lat"]
+            ),
+            crs="EPSG:4326"
+        )
+
+    # --------------------------------------------------------------
+    # Polygon aggregation
+    # --------------------------------------------------------------
+    elif framework == "polygon":
+
+        if polygon_file is None:
+            raise ValueError(
+                "polygon_file must be provided when "
+                "framework='polygon'."
+            )
+
+        polygon_path = Path(polygon_file)
+
+        if not polygon_path.exists():
+            raise FileNotFoundError(
+                f"Polygon file not found: {polygon_path}"
+            )
+
+        # Read polygon dataset
+        polygon = gpd.read_file(polygon_path)
+
+        if polygon.crs is None:
+            raise ValueError(
+                "Polygon dataset must have a defined CRS."
+            )
+
+        if group_column not in polygon.columns:
+            raise KeyError(
+                f"'{group_column}' not found in polygon dataset."
+            )
+
+        # Remove ocean polygons if present
+        if "Type" in polygon.columns:
+            polygon = polygon[
+                polygon["Type"] != "Ocean"
+            ].copy()
+
+        # Match CRS
+        if df.crs != polygon.crs:
+            polygon = polygon.to_crs(df.crs)
+
+        # ----------------------------------------------------------
+        # Spatially assign transects to polygons
+        # ----------------------------------------------------------
+        df_joined = gpd.sjoin(
+            df,
+            polygon[[group_column, "geometry"]],
+            how="inner",
+            predicate="intersects",
+        )
+
+        # Calculate statistics by polygon
+        df_amp = (
+            df_joined.groupby(group_column)
+            .apply(
+                amp_stats,
+                min_total=min_total,
+                min_overlap=min_overlap,
+                include_groups=False,
+            )
+            .reset_index()
+        )
+
+        # ----------------------------------------------------------
+        # Attach polygon geometry
+        # ----------------------------------------------------------
+        polygon_geometry = (
+            polygon[[group_column, "geometry"]]
+            .dissolve(by=group_column)
+            .reset_index()
+        )
+
+        df_amp = polygon_geometry.merge(
+            df_amp,
+            on=group_column,
+            how="left",
+        )
+
+        df_amp = gpd.GeoDataFrame(
+            df_amp,
+            geometry="geometry",
+            crs=polygon.crs,
+        )
+
+    else:
+        raise ValueError(
+            "framework must be either 'h3' or 'polygon'."
+        )
+
+    return df_amp
+
+
+def calculate_HPI(
+    burden,
+    amplification,
+    amp_column="amp_FES",
+    framework="h3",
+    polygon_id="Acronym",
+    burden_column="MHB",
+):
+    """
+    Calculate the Hotspot Prioritization Index (HPI) by combining
+    Multi-Hazard Burden (MHB) and statistical flood amplification.
+
+    The two constituent indicators are normalized independently using
+    min-max normalization and subsequently combined multiplicatively:
+
+        N_X = (X - X_min) / (X_max - X_min)
+
+        HPI = N_MHB * N_amp
+
+    The function supports both H3-based and polygon-based spatial
+    aggregation.
+
+    Parameters
+    ----------
+    burden : pandas.DataFrame or geopandas.GeoDataFrame
+        Dataframe containing the Multi-Hazard Burden values.
+
+        For ``framework="h3"``, it must contain an ``h3`` column.
+        For ``framework="polygon"``, it must contain the column specified
+        by ``polygon_id``.
+
+    amplification : pandas.DataFrame or geopandas.GeoDataFrame
+        Dataframe containing the statistical amplification results and
+        the spatial identifier corresponding to ``burden``.
+
+    amp_column : str, default "amp_FES"
+        Amplification column used to construct the HPI. For example:
+
+        - ``amp_FE``  : flood amplification conditioned on erosion
+        - ``amp_FS``  : flood amplification conditioned on subsidence
+        - ``amp_FES`` : flood amplification conditioned on simultaneous
+          erosion and subsidence
+
+    framework : {"h3", "polygon"}, default "h3"
+        Spatial aggregation framework used for the calculation.
+
+        - ``"h3"`` joins the data using the ``h3`` identifier.
+        - ``"polygon"`` joins the data using ``polygon_id``.
+
+    polygon_id : str, default "Acronym"
+        Identifier column used to join polygon-based results.
+        Ignored when ``framework="h3"``.
+
+    burden_column : str, default "MHB"
+        Column containing the Multi-Hazard Burden values.
+
+    Returns
+    -------
+    pandas.DataFrame or geopandas.GeoDataFrame
+        Combined dataframe containing the burden, amplification,
+        normalized indicators, and HPI:
+
+        - ``amp``   : selected amplification factor
+        - ``N_amp`` : normalized amplification
+        - ``N_mhb`` : normalized Multi-Hazard Burden
+        - ``HPI``   : Hotspot Prioritization Index
+
+        If ``burden`` is a GeoDataFrame, its geometry is preserved.
+
+    Raises
+    ------
+    ValueError
+        If an unsupported framework is provided.
+
+    KeyError
+        If required identifier or metric columns are missing.
+    """
+
+    # --------------------------------------------------------------
+    # Copy inputs to avoid modifying original dataframes
+    # --------------------------------------------------------------
+    burden = burden.copy()
+    amplification = amplification.copy()
+
+    # --------------------------------------------------------------
+    # Determine spatial identifier
+    # --------------------------------------------------------------
+    if framework == "h3":
+        join_column = "h3"
+
+    elif framework == "polygon":
+        join_column = polygon_id
+
+    else:
+        raise ValueError(
+            "framework must be either 'h3' or 'polygon'."
+        )
+
+    # --------------------------------------------------------------
+    # Check required columns
+    # --------------------------------------------------------------
+    if join_column not in burden.columns:
+        raise KeyError(
+            f"'{join_column}' not found in burden dataframe."
+        )
+
+    if join_column not in amplification.columns:
+        raise KeyError(
+            f"'{join_column}' not found in amplification dataframe."
+        )
+
+    if burden_column not in burden.columns:
+        raise KeyError(
+            f"'{burden_column}' not found in burden dataframe."
+        )
+
+    if amp_column not in amplification.columns:
+        raise KeyError(
+            f"'{amp_column}' not found in amplification dataframe."
+        )
+
+    # --------------------------------------------------------------
+    # Select amplification metric
+    # --------------------------------------------------------------
+    amplification["amp"] = amplification[amp_column]
+
+    # Only retain columns needed from amplification.
+    # This prevents duplicate columns such as geometry, counts, etc.
+    amp_keep = [
+        join_column,
+        "amp",
+    ]
+
+    # Optionally retain useful amplification statistics
+    optional_columns = [
+        "n_total",
+        "n_F",
+        "n_E",
+        "n_S",
+        "n_FE",
+        "n_FS",
+        "n_ES",
+        "n_FES",
+        "pF",
+        "pF_E",
+        "pF_S",
+        "pF_ES",
+        "amp_FE",
+        "amp_FS",
+        "amp_FES",
+    ]
+
+    for col in optional_columns:
+        if (
+            col in amplification.columns
+            and col not in amp_keep
+        ):
+            amp_keep.append(col)
+
+    amplification = amplification[amp_keep]
+
+    # --------------------------------------------------------------
+    # Merge burden and amplification
+    # --------------------------------------------------------------
+    hpi = burden.merge(
+        amplification,
+        on=join_column,
+        how="left",
+    )
+
+    # --------------------------------------------------------------
+    # Min-max normalization helper
+    # --------------------------------------------------------------
+    def minmax(series):
+        valid = series.dropna()
+
+        if valid.empty:
+            return pd.Series(
+                np.nan,
+                index=series.index,
+                dtype=float,
+            )
+
+        xmin = valid.min()
+        xmax = valid.max()
+
+        # Avoid division by zero when all values are identical
+        if xmax == xmin:
+            return pd.Series(
+                np.nan,
+                index=series.index,
+                dtype=float,
+            )
+
+        return (series - xmin) / (xmax - xmin)
+
+    # --------------------------------------------------------------
+    # Normalize constituent indicators
+    # --------------------------------------------------------------
+    hpi["N_amp"] = minmax(hpi["amp"])
+    hpi["N_mhb"] = minmax(hpi[burden_column])
+
+    # --------------------------------------------------------------
+    # Calculate HPI
+    # --------------------------------------------------------------
+    hpi["HPI"] = (
+        hpi["N_amp"]
+        * hpi["N_mhb"]
+    )
+
+    # --------------------------------------------------------------
+    # Optional global HPI ranking
+    # --------------------------------------------------------------
+    hpi["HPI_rank"] = hpi["HPI"].rank(
+        method="min",
+        ascending=False,
+    )
+
+    # Keep missing HPI as NaN but use nullable integer for rank
+    hpi["HPI_rank"] = hpi["HPI_rank"].astype("Int64")
+
+    return hpi

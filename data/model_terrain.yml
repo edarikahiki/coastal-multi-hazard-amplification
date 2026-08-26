@@ -1,0 +1,242 @@
+meta:
+  version: v1.0.0
+  root: f:\TUD_CEG_Repository\MSc_Thesis\coastal-multi-hazard-amplification\data\transformed_terrain
+  name: artifact_data
+  hydromt_version: '>1.0a,<2'
+bohai_10m:
+  data_type: RasterDataset
+  uri: bohai/bohai_10m.tif
+  driver:
+    name: rasterio
+    options:
+      chunks:
+        x: 1000
+        y: 1000
+  metadata:
+    category: topography
+    crs: '32651'
+    nodata: -9999
+  data_adapter:
+    rename:
+      large_model_dep: elevtn
+bohai_erosion_100:
+  data_type: RasterDataset
+  uri: bohai/bohai_erosion_100.tif
+  driver:
+    name: rasterio
+    options:
+      chunks:
+        x: 1000
+        y: 1000
+  metadata:
+    category: topography
+    crs: '32651'
+    nodata: -9999
+  data_adapter:
+    rename:
+      large_model_dep: elevtn
+bohai_erosion_50:
+  data_type: RasterDataset
+  uri: bohai/bohai_erosion_50.tif
+  driver:
+    name: rasterio
+    options:
+      chunks:
+        x: 1000
+        y: 1000
+  metadata:
+    category: topography
+    crs: '32651'
+    nodata: -9999
+  data_adapter:
+    rename:
+      large_model_dep: elevtn
+bohai_subsidence_100:
+  data_type: RasterDataset
+  uri: bohai/bohai_subsidence_100.tif
+  driver:
+    name: rasterio
+    options:
+      chunks:
+        x: 1000
+        y: 1000
+  metadata:
+    category: topography
+    crs: '32651'
+    nodata: -9999
+  data_adapter:
+    rename:
+      large_model_dep: elevtn
+bohai_subsidence_50:
+  data_type: RasterDataset
+  uri: bohai/bohai_subsidence_50.tif
+  driver:
+    name: rasterio
+    options:
+      chunks:
+        x: 1000
+        y: 1000
+  metadata:
+    category: topography
+    crs: '32651'
+    nodata: -9999
+  data_adapter:
+    rename:
+      large_model_dep: elevtn
+bohai_erosion_subsidence_100:
+  data_type: RasterDataset
+  uri: bohai/bohai_erosion_subsidence_100.tif
+  driver:
+    name: rasterio
+    options:
+      chunks:
+        x: 1000
+        y: 1000
+  metadata:
+    category: topography
+    crs: '32651'
+    nodata: -9999
+  data_adapter:
+    rename:
+      large_model_dep: elevtn
+bohai_erosion_subsidence_50:
+  data_type: RasterDataset
+  uri: bohai/bohai_erosion_subsidence_50.tif
+  driver:
+    name: rasterio
+    options:
+      chunks:
+        x: 1000
+        y: 1000
+  metadata:
+    category: topography
+    crs: '32651'
+    nodata: -9999
+  data_adapter:
+    rename:
+      large_model_dep: elevtn
+large_model_manning:
+  data_type: RasterDataset
+  uri: gis/manning_input.tif
+  driver:
+    name: rasterio
+    options:
+      chunks:
+        x: 1000
+        y: 1000
+  metadata:
+    category: roughness
+    crs: 32651
+    nodata: -9999
+mozambique_10m:
+  data_type: RasterDataset
+  uri: mozambique/mozambique_10m.tif
+  driver:
+    name: rasterio
+    options:
+      chunks:
+        x: 1000
+        y: 1000
+  metadata:
+    category: topography
+    crs: '32736'
+    nodata: -9999
+  data_adapter:
+    rename:
+      large_model_dep: elevtn
+mozambique_erosion_100:
+  data_type: RasterDataset
+  uri: mozambique/mozambique_erosion_100.tif
+  driver:
+    name: rasterio
+    options:
+      chunks:
+        x: 1000
+        y: 1000
+  metadata:
+    category: topography
+    crs: '32736'
+    nodata: -9999
+  data_adapter:
+    rename:
+      large_model_dep: elevtn
+mozambique_erosion_50:
+  data_type: RasterDataset
+  uri: mozambique/mozambique_erosion_50.tif
+  driver:
+    name: rasterio
+    options:
+      chunks:
+        x: 1000
+        y: 1000
+  metadata:
+    category: topography
+    crs: '32736'
+    nodata: -9999
+  data_adapter:
+    rename:
+      large_model_dep: elevtn
+mozambique_subsidence_100:
+  data_type: RasterDataset
+  uri: mozambique/mozambique_subsidence_100.tif
+  driver:
+    name: rasterio
+    options:
+      chunks:
+        x: 1000
+        y: 1000
+  metadata:
+    category: topography
+    crs: '32736'
+    nodata: -9999
+  data_adapter:
+    rename:
+      large_model_dep: elevtn
+mozambique_subsidence_50:
+  data_type: RasterDataset
+  uri: mozambique/mozambique_subsidence_50.tif
+  driver:
+    name: rasterio
+    options:
+      chunks:
+        x: 1000
+        y: 1000
+  metadata:
+    category: topography
+    crs: '32736'
+    nodata: -9999
+  data_adapter:
+    rename:
+      large_model_dep: elevtn
+mozambique_erosion_subsidence_100:
+  data_type: RasterDataset
+  uri: mozambique/mozambique_erosion_subsidence_100.tif
+  driver:
+    name: rasterio
+    options:
+      chunks:
+        x: 1000
+        y: 1000
+  metadata:
+    category: topography
+    crs: '32736'
+    nodata: -9999
+  data_adapter:
+    rename:
+      large_model_dep: elevtn
+mozambique_erosion_subsidence_50:
+  data_type: RasterDataset
+  uri: mozambique/mozambique_erosion_subsidence_50.tif
+  driver:
+    name: rasterio
+    options:
+      chunks:
+        x: 1000
+        y: 1000
+  metadata:
+    category: topography
+    crs: '32736'
+    nodata: -9999
+  data_adapter:
+    rename:
+      large_model_dep: elevtn

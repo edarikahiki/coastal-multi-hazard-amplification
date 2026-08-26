@@ -1,0 +1,86 @@
+meta:
+  version: v1.0.0
+  root: f:\TUD_CEG_Repository\MSc_Thesis\coastal-multi-hazard-amplification\data
+  name: artifact_data
+  hydromt_version: '>1.0a,<2'
+gswo:
+  data_type: RasterDataset
+  version: v1_4_2021
+  uri: GSWO\occur.vrt
+  driver:
+    name: rasterio
+    options:
+      chunks:
+        x: 4000
+        y: 4000
+  metadata:
+    category: hydrography
+    paper_doi: 10.1038/nature20584
+    paper_ref: Pekel et al. (2016)
+    url: https://global-surface-water.appspot.com/download
+    extent:
+      bbox:
+        West: -180.0
+        South: -60.0
+        East: 180.0
+        North: 80.0
+    nodata: 255
+deltadtm:
+  data_type: RasterDataset
+  uri: DeltaDTM v1.1\Asia\deltadtm_v1_1.vrt
+  driver:
+    name: rasterio
+    options:
+      chunks:
+        x: 3600
+        y: 3600
+  metadata:
+    category: topography
+    extent:
+      bbox:
+        West: -180.001
+        South: -90.0
+        East: 180.0
+        North: 84.0
+    nodata: -9999
+gebco:
+  data_type: RasterDataset
+  uri: gebco\gebco.vrt
+  version: 2020
+  driver:
+    name: rasterio
+    options:
+      chunks:
+        x: 3600
+        y: 3600
+  metadata:
+    category: topography
+    paper_doi: 10.5285/a29c5465-b138-234d-e053-6c86abc040b9
+    paper_ref: Weatherall et al (2020)
+    unit: m+MSL
+    processing_script: bathymetry/gebco/gebco_tiles.ipynb
+    url: https://www.bodc.ac.uk/data/hosted_data_systems/gebco_gridded_bathymetry_data/
+    license: https://www.gebco.net/data_and_products/gridded_bathymetry_data/#a1
+    extent:
+      bbox:
+        West: -180.0
+        South: -90.0
+        East: 180.0
+        North: 90.0
+    crs: 4326
+  data_adapter:
+    rename:
+      gebco: elevtn
+vito_2020:
+  data_type: RasterDataset
+  version: 1.00
+  uri: vito.tif
+  driver:
+    name: rasterio
+    options: {}
+  metadata:
+    category: landuse & landcover
+    paper_doi: 10.5281/zenodo.3939038
+    paper_ref: Buchhorn et al (2020)
+    url: https://land.copernicus.eu/global/products/lc
+    crs: 4326
