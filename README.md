@@ -69,7 +69,9 @@ Flood amplification is evaluated from the change in the probability of
 extreme flooding when other extreme hazards are present. The compound
 erosion-subsidence amplification factor is conceptually expressed as
 
-\[ A\_{F\|ES} = `\frac{P(F \mid E \cap S)}{P(F)}`{=tex} \]
+$$
+A_{F|ES} = \frac{P(F \mid E \cap S)}{P(F)}
+$$
 
 where (F), (E), and (S) represent extreme flooding, erosion, and
 subsidence, respectively. Values greater than one indicate that extreme
