@@ -18,6 +18,21 @@ https://github.com/edarikahiki/coastal-multi-hazard-amplification
 
 ------------------------------------------------------------------------
 
+## Thesis
+
+This repository accompanies the MSc thesis:
+
+**Multi-Hazard Amplification of Coastal Flooding: An Integrated Framework Utilizing Global Earth Observation Datasets**
+
+MSc Thesis, Hydraulic Engineering — Civil Engineering  
+Delft University of Technology
+
+The full thesis is available through the TU Delft Repository:
+
+[View thesis in the TU Delft Repository](https://repository.tudelft.nl/record/uuid:5bf8a381-a911-4356-a253-3ea9b4eeb369)
+
+------------------------------------------------------------------------
+
 ## Workflow
 
 The main analysis is organized as a sequence of Jupyter notebooks:
@@ -279,3 +294,10 @@ requirements remain applicable to all externally sourced data.
 
 See the repository license for the code in this project. External
 datasets and software retain their own licenses and terms of use.
+
+## Contact
+
+For questions regarding the methodology, data processing, or reproduction of this work, please contact:
+
+**Irham Adrie Hakiki**  
+Email: adriehakiki@gmail.com
