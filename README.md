@@ -152,82 +152,23 @@ modelling workflow**.
 
 ## Data sources and folder contents
 
-  ------------------------------------------------------------------------------------------------------------------------------------------------------
-  Folder / file                           Purpose                     Source / how to obtain
-  --------------------------------------- --------------------------- ----------------------------------------------------------------------------------
-  `coastlines_osm_generalized_v2023/`     Generalized coastline used  Derived from **OpenStreetMap coastline data**. Global processed coastline lines
-                                          for efficient global        can be downloaded from https://osmdata.openstreetmap.de/data/coastlines.html.
-                                          visualization and spatial   OpenStreetMap-derived coastline data are distributed under the ODbL. The
-                                          operations.                 generalized 2023 version used in this project is a processed derivative and may
-                                                                      need to be recreated from the appropriate historical/source coastline if exact
-                                                                      reproduction is required.
+ ## Data sources and folder contents
 
-  `Floodmap_noveg_rp100/`                 Global coastal flood hazard Based on the global episodic coastal flooding dataset/methodology of **van Zelst et
-                                          used to map flood depth to  al. (2026), *Adding a new dimension to the global flood protection value of mangroves 
-                                          GCTS transects. The project and tidal marshes***, 
-                                          uses the no-vegetation,     The exact prepared raster used by this repository is not redistributed here;
-                                          100-year return-period      obtain the source flood product from the original data provider/project archive or 
-                                          flood layer.                authors where required.
-
-  `GSWO/`                                 Global Surface Water        **JRC Global Surface Water** dataset by Pekel et al. Download:
-                                          Occurrence data used during https://global-surface-water.appspot.com/download. Dataset information:
-                                          preparation of the local    https://data.jrc.ec.europa.eu/dataset/jrc-gswe-global-surface-water-explorer-v1.
-                                          SFINCS terrain/model domain 
-                                          and land-water masking.     
-
-  `IPCC region/`                          Polygon regions used to     **IPCC AR6 WGI Reference Regions v4**. The GeoJSON and shapefile are available
-                                          demonstrate that the        from the IPCC-WG1 Atlas repository:
-                                          multi-hazard framework can  https://github.com/IPCC-WG1/Atlas/tree/main/reference-regions.
-                                          operate with an externally  
-                                          defined polygon aggregation 
-                                          framework instead of H3.    
-
-  `Subsidence/`                           Global land-subsidence      **Hasan et al. (2023), *Global land subsidence mapping reveals widespread loss of
-                                          dataset mapped to the       aquifer storage capacity***, Nature Communications 14, 6180. Dataset archive:
-                                          coastal transects.          https://doi.org/10.4211/hs.dc7c5bfb3a86479b889d3b30ab0e4ef7. Project code:
-                                                                      https://github.com/mdfahimhasan/Global-Subsidence-Groundwater.
-
-  `SFINCS_v2.3.0_mt_Faber_release_exe/`   SFINCS executable used for  **Deltares SFINCS v2.3.0 mt Faber release**. Releases:
-                                          the local flood             https://github.com/Deltares/SFINCS/releases. Precompiled executable:
-                                          simulations.                https://download.deltares.nl/en/sfincs/. Use the release consistent with the model
-                                                                      configuration when reproducing the simulations.
-
-  `base_model/`                           Baseline SFINCS model(s)    **Baseline flood model scenario.** Build using the modelling workflow and the external
-                                          from which the              elevation, bathymetry, shoreline, surface-water, and forcing datasets specified by
-                                          terrain-change scenarios    the HydroMT data catalog. This folder is based on **van Zelst et al (2026)**, 
-                                          are constructed.            not an independently downloadable external dataset.
-
-  `model_input/`                          Prepared input files used   **Generated / assembled project data.** Contents depend on the selected case-study
-                                          to construct or run the     domain and HydroMT-SFINCS configuration.
-                                          local SFINCS models.        
-
-  `transformed_terrain/`                  Terrain rasters generated   **Generated by this repository.** These files are outputs of the
-                                          for erosion, subsidence,    terrain-transformation workflow and should be recreated from the baseline terrain
-                                          and combined future-terrain and mapped hazard information.
-                                          scenarios.                  
-
-  `mapped_hazard.parquet`                 Integrated GCTS-level       **Generated by `01_hazard_mapping.ipynb`.** It is not a primary external dataset.
-                                          dataset containing the      
-                                          mapped flood,               
-                                          erosion/shoreline-change,   
-                                          and subsidence variables    
-                                          used by the statistical     
-                                          analysis.                   
-
-  `data_catalog.yml`                      HydroMT data catalog        Project configuration file. Paths may need to be adapted to the local data
-                                          describing model input      directory.
-                                          datasets.                   
-
-  `model_terrain.yml`                     HydroMT                     Project configuration file generated/updated by the modelling workflow.
-                                          catalog/configuration for   
-                                          generated terrain           
-                                          scenarios.                  
-
-  `run.bat`                               Convenience script for      Project utility file; adjust the executable/model path if necessary.
-                                          running SFINCS on Windows.  
-  ------------------------------------------------------------------------------------------------------------------------------------------------------
-
-------------------------------------------------------------------------
+| Folder / file | Purpose | Source / how to obtain |
+|---|---|---|
+| `coastlines_osm_generalized_v2023/` | Generalized coastline used for efficient global visualization and spatial operations. | Derived from **OpenStreetMap coastline data**. Global processed coastline lines can be downloaded from `https://osmdata.openstreetmap.de/data/coastlines.html`. OpenStreetMap-derived coastline data are distributed under the ODbL. The generalized 2023 version used in this project is a processed derivative and may need to be recreated from the appropriate historical/source coastline if exact reproduction is required. |
+| `Floodmap_noveg_rp100/` | Global coastal flood hazard used to map flood depth to GCTS transects. The project uses the no-vegetation, 100-year return-period flood layer. | Based on the global coastal flooding dataset/methodology of **van Zelst et al. (2026), *Adding a new dimension to the global flood protection value of mangroves and tidal marshes***. The exact prepared raster used by this repository is not redistributed here; obtain the source flood product from the original data provider, project archive, or authors where required. |
+| `GSWO/` | Global Surface Water Occurrence data used during preparation of the local SFINCS terrain/model domain and land-water masking. | **JRC Global Surface Water** dataset by Pekel et al. Download from `https://global-surface-water.appspot.com/download`. Dataset information is available at `https://data.jrc.ec.europa.eu/dataset/jrc-gswe-global-surface-water-explorer-v1`. |
+| `IPCC region/` | Polygon regions used to demonstrate that the multi-hazard framework can operate with an externally defined polygon aggregation framework instead of H3. | **IPCC AR6 WGI Reference Regions v4**. The GeoJSON and shapefile are available from the IPCC-WG1 Atlas repository at `https://github.com/IPCC-WG1/Atlas/tree/main/reference-regions`. |
+| `Subsidence/` | Global land-subsidence dataset mapped to the coastal transects. | **Hasan et al. (2023), *Global land subsidence mapping reveals widespread loss of aquifer storage capacity***, *Nature Communications*, 14, 6180. Dataset archive: `https://doi.org/10.4211/hs.dc7c5bfb3a86479b889d3b30ab0e4ef7`. Project code: `https://github.com/mdfahimhasan/Global-Subsidence-Groundwater`. |
+| `SFINCS_v2.3.0_mt_Faber_release_exe/` | SFINCS executable used for the local flood simulations. | **Deltares SFINCS v2.3.0 mt Faber release**. Releases are available at `https://github.com/Deltares/SFINCS/releases`. The precompiled executable is available from `https://download.deltares.nl/en/sfincs/`. Use the release consistent with the model configuration when reproducing the simulations. |
+| `base_model/` | Baseline SFINCS model(s) from which the terrain-change scenarios are constructed. | **Baseline flood model scenario.** Build using the modelling workflow and the external elevation, bathymetry, shoreline, surface-water, and forcing datasets specified by the HydroMT data catalog. This folder is based on **van Zelst et al. (2026)** and is not an independently downloadable external dataset. |
+| `model_input/` | Prepared input files used to construct or run the local SFINCS models. | **Generated / assembled project data.** Contents depend on the selected case-study domain and HydroMT-SFINCS configuration. |
+| `transformed_terrain/` | Terrain rasters generated for erosion, subsidence, and combined future-terrain scenarios. | **Generated by this repository.** These files are outputs of the terrain-transformation workflow and should be recreated from the baseline terrain and mapped hazard information. |
+| `mapped_hazard.parquet` | Integrated GCTS-level dataset containing the mapped flood, erosion/shoreline-change, and subsidence variables used by the statistical analysis. | **Generated by `01_hazard_mapping.ipynb`.** It is not a primary external dataset. |
+| `data_catalog.yml` | HydroMT data catalog describing model input datasets. | Project configuration file. Paths may need to be adapted to the local data directory. |
+| `model_terrain.yml` | HydroMT catalog/configuration for generated terrain scenarios. | Project configuration file generated or updated by the modelling workflow. |
+| `run.bat` | Convenience script for running SFINCS on Windows. | Project utility file; adjust the executable and model paths if necessary. |
 
 ## Global Coastal Transect System and shoreline-change data
 
