@@ -107,7 +107,7 @@ is intended as a relative screening and prioritization indicator.
 Create the Conda environment supplied with the repository, if available:
 
 ``` bash
-conda env create -f environment.yml
+conda env create -f env.yml
 conda activate multi-hazard
 ```
 
